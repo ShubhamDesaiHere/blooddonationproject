@@ -1,0 +1,781 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">🩸 Blood Donor Questionnaire Form</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6>Request Details:</h6>
+                        <p><strong>Blood Group Needed:</strong> {{ blood_request.data.blood_group_needed }}</p>
+                        <p><strong>Hospital:</strong> {{ admin.hospital_name }}</p>
+                        <p><strong>Address:</strong> {{ admin.address }}</p>
+                        <p><strong>Phone:</strong> {{ admin.phone }}</p>
+                    </div>
+                    
+                    <form id="bloodDonationForm">
+                        <input type="hidden" id="requestId" value="{{ request_id }}">
+                        
+                        <!-- Section 1: Personal Information -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Section 1: Personal Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="fullName" class="form-label">Full Name *</label>
+                                            <input type="text" class="form-control" id="fullName" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="dateOfBirth" class="form-label">Date of Birth *</label>
+                                            <input type="date" class="form-control" id="dateOfBirth" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Gender *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="gender" id="genderMale" value="male" required>
+                                                <label class="form-check-label" for="genderMale">Male</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="female" required>
+                                                <label class="form-check-label" for="genderFemale">Female</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="gender" id="genderOther" value="other" required>
+                                                <label class="form-check-label" for="genderOther">Other</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="weight" class="form-label">Weight (kg) *</label>
+                                            <input type="number" class="form-control" id="weight" min="30" max="200" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="contactNo" class="form-label">Contact No *</label>
+                                            <input type="tel" class="form-control" id="contactNo" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label for="address" class="form-label">Address *</label>
+                                            <textarea class="form-control" id="address" rows="2" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="idProof" class="form-label">ID Proof *</label>
+                                            <input type="text" class="form-control" id="idProof" placeholder="Aadhar, Passport, etc." required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: General Eligibility -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">Section 2: General Eligibility</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you donated blood in the last 3 months (male) / 4 months (female)? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="recentDonation" id="recentDonationYes" value="yes" required>
+                                                <label class="form-check-label" for="recentDonationYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="recentDonation" id="recentDonationNo" value="no" required>
+                                                <label class="form-check-label" for="recentDonationNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Do you weigh more than 50 kg? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="weight50kg" id="weight50kgYes" value="yes" required>
+                                                <label class="form-check-label" for="weight50kgYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="weight50kg" id="weight50kgNo" value="no" required>
+                                                <label class="form-check-label" for="weight50kgNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Did you eat a proper meal in the last 4 hours? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="properMeal" id="properMealYes" value="yes" required>
+                                                <label class="form-check-label" for="properMealYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="properMeal" id="properMealNo" value="no" required>
+                                                <label class="form-check-label" for="properMealNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Did you sleep at least 3–4 hours last night? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="sleepHours" id="sleepHoursYes" value="yes" required>
+                                                <label class="form-check-label" for="sleepHoursYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="sleepHours" id="sleepHoursNo" value="no" required>
+                                                <label class="form-check-label" for="sleepHoursNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Are you feeling healthy and well today? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="healthyToday" id="healthyTodayYes" value="yes" required>
+                                                <label class="form-check-label" for="healthyTodayYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="healthyToday" id="healthyTodayNo" value="no" required>
+                                                <label class="form-check-label" for="healthyTodayNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 3: Medical History -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-white">
+                                <h5 class="mb-0">Section 3: Medical History</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Do you have any chronic illness (diabetes, heart disease, asthma, epilepsy, cancer, hypertension)? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="chronicIllness" id="chronicIllnessYes" value="yes" required>
+                                                <label class="form-check-label" for="chronicIllnessYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="chronicIllness" id="chronicIllnessNo" value="no" required>
+                                                <label class="form-check-label" for="chronicIllnessNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you undergone major surgery in the last 6 months? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="majorSurgery" id="majorSurgeryYes" value="yes" required>
+                                                <label class="form-check-label" for="majorSurgeryYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="majorSurgery" id="majorSurgeryNo" value="no" required>
+                                                <label class="form-check-label" for="majorSurgeryNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you ever received blood transfusion in the past 12 months? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="bloodTransfusion" id="bloodTransfusionYes" value="yes" required>
+                                                <label class="form-check-label" for="bloodTransfusionYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="bloodTransfusion" id="bloodTransfusionNo" value="no" required>
+                                                <label class="form-check-label" for="bloodTransfusionNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Are you currently taking any medicines (antibiotics, steroids, etc.)? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="currentMedicines" id="currentMedicinesYes" value="yes" required>
+                                                <label class="form-check-label" for="currentMedicinesYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="currentMedicines" id="currentMedicinesNo" value="no" required>
+                                                <label class="form-check-label" for="currentMedicinesNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you ever been diagnosed with Hepatitis B, Hepatitis C, HIV/AIDS, Syphilis, Malaria, Tuberculosis? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="infectiousDiseases" id="infectiousDiseasesYes" value="yes" required>
+                                                <label class="form-check-label" for="infectiousDiseasesYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="infectiousDiseases" id="infectiousDiseasesNo" value="no" required>
+                                                <label class="form-check-label" for="infectiousDiseasesNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 4: Infectious Disease & Risk -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">Section 4: Infectious Disease & Risk</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you had jaundice in the past 1 year? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="jaundice" id="jaundiceYes" value="yes" required>
+                                                <label class="form-check-label" for="jaundiceYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="jaundice" id="jaundiceNo" value="no" required>
+                                                <label class="form-check-label" for="jaundiceNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you ever tested positive for HIV/AIDS? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="hivPositive" id="hivPositiveYes" value="yes" required>
+                                                <label class="form-check-label" for="hivPositiveYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="hivPositive" id="hivPositiveNo" value="no" required>
+                                                <label class="form-check-label" for="hivPositiveNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">In the last 3 months, did you get a tattoo, piercing, or acupuncture? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="tattooPiercing" id="tattooPiercingYes" value="yes" required>
+                                                <label class="form-check-label" for="tattooPiercingYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="tattooPiercing" id="tattooPiercingNo" value="no" required>
+                                                <label class="form-check-label" for="tattooPiercingNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">In the last 6 months, did you undergo dental extraction or surgery? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="dentalSurgery" id="dentalSurgeryYes" value="yes" required>
+                                                <label class="form-check-label" for="dentalSurgeryYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="dentalSurgery" id="dentalSurgeryNo" value="no" required>
+                                                <label class="form-check-label" for="dentalSurgeryNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you ever used intravenous drugs (IV drugs)? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ivDrugs" id="ivDrugsYes" value="yes" required>
+                                                <label class="form-check-label" for="ivDrugsYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ivDrugs" id="ivDrugsNo" value="no" required>
+                                                <label class="form-check-label" for="ivDrugsNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Do you or your partner belong to any high-risk group? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="highRiskGroup" id="highRiskGroupYes" value="yes" required>
+                                                <label class="form-check-label" for="highRiskGroupYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="highRiskGroup" id="highRiskGroupNo" value="no" required>
+                                                <label class="form-check-label" for="highRiskGroupNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">In the last 6 months, have you had unprotected sex with a new partner? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="unprotectedSex" id="unprotectedSexYes" value="yes" required>
+                                                <label class="form-check-label" for="unprotectedSexYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="unprotectedSex" id="unprotectedSexNo" value="no" required>
+                                                <label class="form-check-label" for="unprotectedSexNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 5: Travel & Lifestyle -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Section 5: Travel & Lifestyle</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you traveled to a malaria-prone area in the last 6 months? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="malariaTravel" id="malariaTravelYes" value="yes" required>
+                                                <label class="form-check-label" for="malariaTravelYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="malariaTravel" id="malariaTravelNo" value="no" required>
+                                                <label class="form-check-label" for="malariaTravelNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you recently traveled outside the country? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="internationalTravel" id="internationalTravelYes" value="yes" required>
+                                                <label class="form-check-label" for="internationalTravelYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="internationalTravel" id="internationalTravelNo" value="no" required>
+                                                <label class="form-check-label" for="internationalTravelNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Do you consume alcohol? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="alcoholConsumption" id="alcoholConsumptionYes" value="yes" required>
+                                                <label class="form-check-label" for="alcoholConsumptionYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="alcoholConsumption" id="alcoholConsumptionNo" value="no" required>
+                                                <label class="form-check-label" for="alcoholConsumptionNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Do you smoke? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="smoking" id="smokingYes" value="yes" required>
+                                                <label class="form-check-label" for="smokingYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="smoking" id="smokingNo" value="no" required>
+                                                <label class="form-check-label" for="smokingNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 6: Women Donors Only -->
+                        <div class="card mb-4" id="womenSection" style="display: none;">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Section 6: Women Donors Only</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Are you currently pregnant or breastfeeding? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="pregnantBreastfeeding" id="pregnantBreastfeedingYes" value="yes">
+                                                <label class="form-check-label" for="pregnantBreastfeedingYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="pregnantBreastfeeding" id="pregnantBreastfeedingNo" value="no">
+                                                <label class="form-check-label" for="pregnantBreastfeedingNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Did you deliver a child in the last 1 year? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="childDelivery" id="childDeliveryYes" value="yes">
+                                                <label class="form-check-label" for="childDeliveryYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="childDelivery" id="childDeliveryNo" value="no">
+                                                <label class="form-check-label" for="childDeliveryNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Are you currently having your menstrual period? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="menstrualPeriod" id="menstrualPeriodYes" value="yes">
+                                                <label class="form-check-label" for="menstrualPeriodYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="menstrualPeriod" id="menstrualPeriodNo" value="no">
+                                                <label class="form-check-label" for="menstrualPeriodNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 7: Current Health Condition -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="mb-0">Section 7: Current Health Condition</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Do you have fever, cough, cold, sore throat, or diarrhea today? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="currentSymptoms" id="currentSymptomsYes" value="yes" required>
+                                                <label class="form-check-label" for="currentSymptomsYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="currentSymptoms" id="currentSymptomsNo" value="no" required>
+                                                <label class="form-check-label" for="currentSymptomsNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you taken any vaccination recently (COVID, Hepatitis, Typhoid, etc.)? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="recentVaccination" id="recentVaccinationYes" value="yes" required>
+                                                <label class="form-check-label" for="recentVaccinationYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="recentVaccination" id="recentVaccinationNo" value="no" required>
+                                                <label class="form-check-label" for="recentVaccinationNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Have you taken antibiotics/steroids in the last 1 week? *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="recentAntibiotics" id="recentAntibioticsYes" value="yes" required>
+                                                <label class="form-check-label" for="recentAntibioticsYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="recentAntibiotics" id="recentAntibioticsNo" value="no" required>
+                                                <label class="form-check-label" for="recentAntibioticsNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 8: Consent & Declaration -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">Section 8: Consent & Declaration</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <p>I confirm that the above information is true to the best of my knowledge. I am voluntarily donating blood without expectation of any payment. I consent to my blood being tested for HIV, Hepatitis B, Hepatitis C, Syphilis, and Malaria.</p>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="donorSignature" class="form-label">Signature of Donor *</label>
+                                            <input type="text" class="form-control" id="donorSignature" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="signatureDate" class="form-label">Date *</label>
+                                            <input type="date" class="form-control" id="signatureDate" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="consentTerms" required>
+                                        <label class="form-check-label" for="consentTerms">
+                                            I agree to the above terms and conditions *
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staff Check Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">👉 Before donation, staff will also check:</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="hemoglobin" class="form-label">Hemoglobin (g/dL) - ≥12.5 required</label>
+                                            <input type="number" class="form-control" id="hemoglobin" step="0.1" min="0" max="20">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="bloodPressure" class="form-label">Blood Pressure (mmHg)</label>
+                                            <input type="text" class="form-control" id="bloodPressure" placeholder="120/80">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="pulse" class="form-label">Pulse (/min)</label>
+                                            <input type="number" class="form-control" id="pulse" min="40" max="200">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="temperature" class="form-label">Temperature (°C)</label>
+                                            <input type="number" class="form-control" id="temperature" step="0.1" min="35" max="42">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Submit Form</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show/hide women's section based on gender selection
+document.querySelectorAll('input[name="gender"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const womenSection = document.getElementById('womenSection');
+        if (this.value === 'female') {
+            womenSection.style.display = 'block';
+            // Make women's section fields required
+            womenSection.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.required = true;
+            });
+        } else {
+            womenSection.style.display = 'none';
+            // Make women's section fields not required
+            womenSection.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.required = false;
+                input.checked = false;
+            });
+        }
+    });
+});
+
+// Form submission
+document.getElementById('bloodDonationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Collect all form data
+    const formData = {
+        request_id: document.getElementById('requestId').value,
+        personal_info: {
+            full_name: document.getElementById('fullName').value,
+            date_of_birth: document.getElementById('dateOfBirth').value,
+            gender: document.querySelector('input[name="gender"]:checked')?.value,
+            weight: document.getElementById('weight').value,
+            address: document.getElementById('address').value,
+            contact_no: document.getElementById('contactNo').value,
+            id_proof: document.getElementById('idProof').value
+        },
+        general_eligibility: {
+            recent_donation: document.querySelector('input[name="recentDonation"]:checked')?.value,
+            weight_50kg: document.querySelector('input[name="weight50kg"]:checked')?.value,
+            proper_meal: document.querySelector('input[name="properMeal"]:checked')?.value,
+            sleep_hours: document.querySelector('input[name="sleepHours"]:checked')?.value,
+            healthy_today: document.querySelector('input[name="healthyToday"]:checked')?.value
+        },
+        medical_history: {
+            chronic_illness: document.querySelector('input[name="chronicIllness"]:checked')?.value,
+            major_surgery: document.querySelector('input[name="majorSurgery"]:checked')?.value,
+            blood_transfusion: document.querySelector('input[name="bloodTransfusion"]:checked')?.value,
+            current_medicines: document.querySelector('input[name="currentMedicines"]:checked')?.value,
+            infectious_diseases: document.querySelector('input[name="infectiousDiseases"]:checked')?.value
+        },
+        infectious_disease_risk: {
+            jaundice: document.querySelector('input[name="jaundice"]:checked')?.value,
+            hiv_positive: document.querySelector('input[name="hivPositive"]:checked')?.value,
+            tattoo_piercing: document.querySelector('input[name="tattooPiercing"]:checked')?.value,
+            dental_surgery: document.querySelector('input[name="dentalSurgery"]:checked')?.value,
+            iv_drugs: document.querySelector('input[name="ivDrugs"]:checked')?.value,
+            high_risk_group: document.querySelector('input[name="highRiskGroup"]:checked')?.value,
+            unprotected_sex: document.querySelector('input[name="unprotectedSex"]:checked')?.value
+        },
+        travel_lifestyle: {
+            malaria_travel: document.querySelector('input[name="malariaTravel"]:checked')?.value,
+            international_travel: document.querySelector('input[name="internationalTravel"]:checked')?.value,
+            alcohol_consumption: document.querySelector('input[name="alcoholConsumption"]:checked')?.value,
+            smoking: document.querySelector('input[name="smoking"]:checked')?.value
+        },
+        women_donors: {
+            pregnant_breastfeeding: document.querySelector('input[name="pregnantBreastfeeding"]:checked')?.value,
+            child_delivery: document.querySelector('input[name="childDelivery"]:checked')?.value,
+            menstrual_period: document.querySelector('input[name="menstrualPeriod"]:checked')?.value
+        },
+        current_health: {
+            current_symptoms: document.querySelector('input[name="currentSymptoms"]:checked')?.value,
+            recent_vaccination: document.querySelector('input[name="recentVaccination"]:checked')?.value,
+            recent_antibiotics: document.querySelector('input[name="recentAntibiotics"]:checked')?.value
+        },
+        consent_declaration: {
+            donor_signature: document.getElementById('donorSignature').value,
+            signature_date: document.getElementById('signatureDate').value,
+            consent_terms: document.getElementById('consentTerms').checked
+        },
+        staff_checks: {
+            hemoglobin: document.getElementById('hemoglobin').value,
+            blood_pressure: document.getElementById('bloodPressure').value,
+            pulse: document.getElementById('pulse').value,
+            temperature: document.getElementById('temperature').value
+        }
+    };
+    
+    // Debug: Log the form data to console
+    console.log('Form data being submitted:', formData);
+    
+    // Validate required fields
+    if (!formData.consent_declaration.consent_terms) {
+        alert('Please check the consent terms checkbox.');
+        return;
+    }
+    
+    // Check for any missing required fields
+    const requiredFields = [
+        'personal_info.full_name', 'personal_info.date_of_birth', 'personal_info.gender', 'personal_info.weight', 'personal_info.address', 'personal_info.contact_no', 'personal_info.id_proof',
+        'general_eligibility.recent_donation', 'general_eligibility.weight_50kg', 'general_eligibility.proper_meal', 'general_eligibility.sleep_hours', 'general_eligibility.healthy_today',
+        'medical_history.chronic_illness', 'medical_history.major_surgery', 'medical_history.blood_transfusion', 'medical_history.current_medicines', 'medical_history.infectious_diseases',
+        'infectious_disease_risk.jaundice', 'infectious_disease_risk.hiv_positive', 'infectious_disease_risk.tattoo_piercing', 'infectious_disease_risk.dental_surgery', 'infectious_disease_risk.iv_drugs', 'infectious_disease_risk.high_risk_group', 'infectious_disease_risk.unprotected_sex',
+        'travel_lifestyle.malaria_travel', 'travel_lifestyle.international_travel', 'travel_lifestyle.alcohol_consumption', 'travel_lifestyle.smoking',
+        'current_health.current_symptoms', 'current_health.recent_vaccination', 'current_health.recent_antibiotics',
+        'consent_declaration.donor_signature', 'consent_declaration.signature_date'
+    ];
+    
+    for (const field of requiredFields) {
+        const value = getNestedValue(formData, field);
+        if (!value) {
+            const fieldName = field.split('.').pop().replace(/_/g, ' ');
+            alert(`Please fill in all required fields. Missing: ${fieldName}`);
+            return;
+        }
+    }
+    
+    // If female, check women's section fields
+    if (formData.personal_info.gender === 'female') {
+        const womenFields = ['women_donors.pregnant_breastfeeding', 'women_donors.child_delivery', 'women_donors.menstrual_period'];
+        for (const field of womenFields) {
+            const value = getNestedValue(formData, field);
+            if (!value) {
+                const fieldName = field.split('.').pop().replace(/_/g, ' ');
+                alert(`Please fill in all required fields for women donors. Missing: ${fieldName}`);
+                return;
+            }
+        }
+    }
+    
+    // Submit form
+    fetch('/user/submit_blood_donation_form', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Form submitted successfully!');
+            window.location.href = '/dashboard';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error submitting form. Please try again.');
+    });
+});
+
+// Helper function to get nested values
+function getNestedValue(obj, path) {
+    return path.split('.').reduce((current, key) => current && current[key], obj);
+}
+</script>
+{% endblock %}

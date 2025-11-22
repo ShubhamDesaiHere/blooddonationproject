@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+<!-- Add Leaflet CSS in the head section -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Profile Header -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <img src="{{ user.avatar or url_for('static', filename='images/default-avatar.png') }}" 
+                             alt="Profile Picture" 
+                             class="rounded-circle"
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    </div>
+                    <h4 class="card-title">{{ user.name }}</h4>
+                    <p class="card-text text-muted">{{ user.email }}</p>
+                    <button class="btn btn-outline-danger" onclick="document.getElementById('avatar-upload').click()">
+                        Change Photo
+                    </button>
+                    <input type="file" id="avatar-upload" style="display: none" accept="image/*">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form id="profile-form">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" name="name" value="{{ user.name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Blood Group</label>
+                                <input type="text" class="form-control" name="blood_group" value="{{ user.blood_group }}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" name="phone" value="{{ user.phone }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-control" name="age" value="{{ user.age }}" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Height (cm)</label>
+                                <input type="number" class="form-control" name="height" value="{{ user.height }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Weight (kg)</label>
+                                <input type="number" class="form-control" name="weight" value="{{ user.weight }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" name="gender" required>
+                                <option value="male" {% if user.gender == 'male' %}selected{% endif %}>Male</option>
+                                <option value="female" {% if user.gender == 'female' %}selected{% endif %}>Female</option>
+                                <option value="other" {% if user.gender == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Your Location</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div id="map" 
+                                 data-lat="{{ user.location.coordinates[1]|tojson if user.location and user.location.coordinates else 0 }}"
+                                 data-lng="{{ user.location.coordinates[0]|tojson if user.location and user.location.coordinates else 0 }}"
+                                 style="height: 400px;"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <input type="text" class="form-control" id="address" value="{{ user.location.address if user.location and user.location.address else '' }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Latitude</label>
+                                <input type="text" class="form-control" id="latitude" value="{{ user.location.coordinates[1] if user.location and user.location.coordinates else '' }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Longitude</label>
+                                <input type="text" class="form-control" id="longitude" value="{{ user.location.coordinates[0] if user.location and user.location.coordinates else '' }}" readonly>
+                            </div>
+                            <button class="btn btn-danger" onclick="updateLocation()">
+                                Update Location
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donation History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Donation History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Hospital</th>
+                                    <th>Blood Group</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="donation-history">
+                                <!-- Donation history will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Add Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+// Initialize map with error handling
+let map, userMarker;
+try {
+    const mapElement = document.getElementById('map');
+    const userLat = parseFloat(mapElement.dataset.lat) || 0;
+    const userLng = parseFloat(mapElement.dataset.lng) || 0;
+    
+    console.log('Initializing map with coordinates:', userLat, userLng);
+    
+    // Check if coordinates are valid
+    if (isNaN(userLat) || isNaN(userLng) || userLat === 0 || userLng === 0) {
+        console.log('Invalid coordinates, using default location');
+        // Default to a central location if coordinates are invalid
+        map = L.map('map').setView([20.5937, 78.9629], 5); // Default to India
+    } else {
+        map = L.map('map').setView([userLat, userLng], 13);
+    }
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Add marker for user's location if coordinates are valid
+    if (!isNaN(userLat) && !isNaN(userLng) && userLat !== 0 && userLng !== 0) {
+        userMarker = L.marker([userLat, userLng])
+            .addTo(map)
+            .bindPopup('Your Location')
+            .openPopup();
+    } else {
+        // Add a default marker
+        userMarker = L.marker([20.5937, 78.9629])
+            .addTo(map)
+            .bindPopup('Default Location')
+            .openPopup();
+    }
+} catch (error) {
+    console.error('Error initializing map:', error);
+    document.getElementById('map').innerHTML = '<div class="alert alert-danger">Error loading map. Please try again later.</div>';
+}
+
+// Function to update location
+function updateLocation() {
+    console.log('updateLocation function called');
+    
+    if ("geolocation" in navigator) {
+        console.log('Geolocation is supported');
+        
+        // Show loading state
+        const updateButton = document.querySelector('button[onclick="updateLocation()"]');
+        const originalText = updateButton.textContent;
+        updateButton.textContent = 'Updating...';
+        updateButton.disabled = true;
+
+        console.log('Requesting geolocation...');
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                console.log('Geolocation success:', position);
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                console.log('Received coordinates:', lat, lng);
+                
+                // Update map
+                map.setView([lat, lng], 13);
+                
+                // Update or create marker
+                if (userMarker) {
+                    userMarker.setLatLng([lat, lng]);
+                } else {
+                    userMarker = L.marker([lat, lng])
+                        .addTo(map)
+                        .bindPopup('Your Location')
+                        .openPopup();
+                }
+                
+                // Update coordinates
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lng;
+                
+                console.log('Making geocoding request...');
+                
+                // Get address using reverse geocoding with proper headers and delay
+                setTimeout(() => {
+                    // Use a proxy to avoid CORS issues
+                    fetch(`/api/geocode?lat=${lat}&lon=${lng}`)
+                        .then(response => {
+                            console.log('Geocoding response status:', response.status);
+                            if (!response.ok) {
+                                throw new Error('Geocoding service error: ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Geocoding data:', data);
+                            if (!data || !data.display_name) {
+                                throw new Error('Invalid address data received');
+                            }
+                            
+                            document.getElementById('address').value = data.display_name;
+                            
+                            console.log('Updating location in database...');
+                            
+                            // Update location in database
+                            return fetch('/user/update_location', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    latitude: lat,
+                                    longitude: lng,
+                                    address: data.display_name
+                                })
+                            });
+                        })
+                        .then(response => {
+                            console.log('Update location response status:', response.status);
+                            if (!response.ok) {
+                                throw new Error('Server error: ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Update location response:', data);
+                            if (data.success) {
+                                alert('Location updated successfully!');
+                            } else {
+                                throw new Error(data.error || 'Unknown error occurred');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Error updating location: ' + error.message);
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            updateButton.textContent = originalText;
+                            updateButton.disabled = false;
+                        });
+                }, 1000); // Add 1 second delay to respect rate limits
+            },
+            function(error) {
+                console.error('Geolocation error:', error);
+                let errorMessage = 'Error getting location: ';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage += 'Location permission denied. Please enable location services.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage += 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage += 'Location request timed out.';
+                        break;
+                    default:
+                        errorMessage += error.message;
+                }
+                alert(errorMessage);
+                // Reset button state
+                updateButton.textContent = originalText;
+                updateButton.disabled = false;
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        console.log('Geolocation is not supported');
+        alert('Geolocation is not supported by your browser');
+    }
+}
+
+// Handle avatar upload
+document.getElementById('avatar-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        
+        fetch('/user/update_avatar', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update avatar image
+                document.querySelector('.rounded-circle').src = data.avatar_url;
+                alert('Profile picture updated successfully!');
+            } else {
+                alert('Error updating profile picture: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error uploading avatar:', error);
+            alert('Error uploading profile picture. Please try again.');
+        });
+    }
+});
+
+// Handle profile form submission
+document.getElementById('profile-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch('/user/update_profile', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Profile updated successfully!');
+        } else {
+            alert('Error updating profile: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating profile:', error);
+        alert('Error updating profile. Please try again.');
+    });
+});
+
+// Load donation history
+function loadDonationHistory() {
+    fetch('/user/donation_history')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const historyTable = document.getElementById('donation-history');
+                historyTable.innerHTML = '';
+                
+                data.donations.forEach(donation => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(donation.donation_date).toLocaleDateString()}</td>
+                        <td>${donation.hospital_name}</td>
+                        <td>${donation.donor_blood_group}</td>
+                        <td><span class="badge bg-success">Completed</span></td>
+                    `;
+                    historyTable.appendChild(row);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading donation history:', error));
+}
+
+// Load data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, initializing...');
+    loadDonationHistory();
+});
+</script>
+{% endblock %} 

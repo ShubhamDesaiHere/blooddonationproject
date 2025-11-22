@@ -1,0 +1,9 @@
+app.log 
+app.log 
+*.env 
+app.log 
+logs/ 
+*.env 
+*.json 
+app.log 
+__MACOSX/ 

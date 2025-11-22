@@ -1,0 +1,12 @@
+# Twilio Configuration
+TWILIO_ACCOUNT_SID=your_twilio_account_sid_here
+TWILIO_AUTH_TOKEN=your_twilio_auth_token_here
+
+# ElevenLabs Configuration
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+
+# Public URL for file access (ngrok URL)
+CALLBACK_BASE_URL=https://your-ngrok-url.ngrok-free.app
+
+
+

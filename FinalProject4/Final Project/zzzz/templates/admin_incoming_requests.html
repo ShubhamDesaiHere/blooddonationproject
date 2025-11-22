@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-inbox"></i> Incoming Admin Requests</h2>
+    <p>View and respond to blood requests from other hospitals/admins.</p>
+    <div id="incomingRequests"></div>
+</div>
+
+<!-- Respond Modal -->
+<div class="modal fade" id="respondModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="respondForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Respond to Request</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="respondRequestId" name="request_id">
+          <div class="mb-3">
+            <label for="responseMessage" class="form-label">Response Message (optional)</label>
+            <textarea class="form-control" id="responseMessage" name="message"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Decision</label><br>
+            <button type="button" class="btn btn-success me-2" onclick="submitResponse('accepted')">Yes (Accept)</button>
+            <button type="button" class="btn btn-danger" onclick="submitResponse('rejected')">No (Reject)</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function loadIncomingRequests() {
+    fetch('/admin/incoming_requests')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                let html = '<table class="table table-bordered table-sm"><thead><tr>' +
+                    '<th>From Hospital</th><th>Blood Group</th><th>Message</th><th>Date</th><th>Status</th><th>Respond</th></tr></thead><tbody>';
+                for (const req of data.requests) {
+                    html += `<tr>
+                        <td>
+                            <strong>${req.from_admin_details.hospital_name || req.from_admin}</strong><br>
+                            <small>${req.from_admin_details.email || ''}</small><br>
+                            <small>${req.from_admin_details.phone || ''}</small><br>
+                            <small>${req.from_admin_details.address || ''}</small>
+                        </td>
+                        <td><span class="badge bg-danger">${req.blood_group}</span></td>
+                        <td>${req.message || ''}</td>
+                        <td>${req.created_at ? new Date(req.created_at).toLocaleString() : ''}</td>
+                        <td>${req.status}${req.response_message ? '<br><small>' + req.response_message + '</small>' : ''}</td>
+                        <td>`;
+                    if (req.status === 'pending') {
+                        html += `<button class="btn btn-success btn-sm me-2" onclick="openRespondModal('${req._id}')">Yes</button>
+                                 <button class="btn btn-danger btn-sm" onclick="openRespondModal('${req._id}')">No</button>`;
+                    } else {
+                        html += '-';
+                    }
+                    html += `</td></tr>`;
+                }
+                html += '</tbody></table>';
+                document.getElementById('incomingRequests').innerHTML = html;
+            }
+        });
+}
+
+function openRespondModal(requestId) {
+    document.getElementById('respondRequestId').value = requestId;
+    document.getElementById('responseMessage').value = '';
+    var modal = new bootstrap.Modal(document.getElementById('respondModal'));
+    modal.show();
+}
+
+function submitResponse(response) {
+    const requestId = document.getElementById('respondRequestId').value;
+    const message = document.getElementById('responseMessage').value;
+    fetch('/admin/respond_request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            request_id: requestId,
+            response: response,
+            message: message
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Response recorded!');
+            bootstrap.Modal.getInstance(document.getElementById('respondModal')).hide();
+            loadIncomingRequests();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadIncomingRequests();
+    setInterval(loadIncomingRequests, 10000); // Refresh every 10 seconds for real-time updates
+});
+</script>
+{% endblock %} 

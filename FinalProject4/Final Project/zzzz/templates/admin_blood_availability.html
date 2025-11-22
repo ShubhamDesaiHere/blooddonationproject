@@ -1,0 +1,193 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient bg-primary text-white text-center">
+                    <h3 class="mb-0">Blood Inventory Management</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <form id="blood-inventory-form">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover text-center align-middle mb-0 bg-white">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Blood Group</th>
+                                                <th>Units Available</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                                            <tr>
+                                                <td><span class="badge bg-danger fs-5">{{ bg }}</span></td>
+                                                <td>
+                                                    <input type="number" class="form-control text-center fw-bold" id="{{ bg }}" name="{{ bg }}" min="0" value="{{ blood_inventory[bg] }}">
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-4 text-end">
+                                    <button type="submit" class="btn btn-primary btn-lg px-4">Save Inventory</button>
+                                </div>
+                                <div id="inventory-message" class="mt-3"></div>
+                            </form>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card h-100 shadow-sm mb-4 mb-lg-3">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="fas fa-chart-pie text-danger me-2"></i>Real-time Availability</h5>
+                                    <span class="badge bg-secondary">Live</span>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="bloodChart" height="260"></canvas>
+                                </div>
+                                <div class="card-footer text-muted small">
+                                    Updates automatically when inventory changes.
+                                </div>
+                            </div>
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-table text-primary me-2"></i>Blood Units Snapshot</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover text-center align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Group</th>
+                                                    <th>Available</th>
+                                                    <th>Used</th>
+                                                    <th>Expired</th>
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                                                <tr>
+                                                    <td><strong>{{ bg }}</strong></td>
+                                                    <td class="text-success fw-semibold">{{ blood_summary[bg]['available'] }}</td>
+                                                    <td class="text-secondary">{{ blood_summary[bg]['used'] }}</td>
+                                                    <td class="text-danger">{{ blood_summary[bg]['expired'] }}</td>
+                                                    <td class="fw-bold">{{ blood_summary[bg]['total'] }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-muted small">
+                                    Totals are calculated from detailed inventory records.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    let bloodChart;
+
+    function initChart(initialData) {
+        const ctx = document.getElementById('bloodChart').getContext('2d');
+        const chartData = bloodGroups.map(bg => initialData[bg] || 0);
+        bloodChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: bloodGroups,
+                datasets: [{
+                    label: 'Units Available',
+                    data: chartData,
+                    backgroundColor: [
+                        '#dc3545','#c82333','#fd7e14','#ffc107',
+                        '#20c997','#0d6efd','#198754','#6f42c1'
+                    ],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Units'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.parsed.y} units`
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function refreshChart() {
+        fetch("{{ url_for('get_blood_availability_data') }}")
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && bloodChart) {
+                    bloodGroups.forEach((bg, idx) => {
+                        bloodChart.data.datasets[0].data[idx] = result.inventory[bg] || 0;
+                    });
+                    bloodChart.update();
+                }
+            })
+            .catch(err => console.error('Failed to refresh chart', err));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const initialInventory = {{ blood_inventory|tojson|safe }};
+        initChart(initialInventory);
+        setInterval(refreshChart, 15000); // refresh every 15 seconds
+    });
+
+    const inventoryForm = document.getElementById('blood-inventory-form');
+    inventoryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = {};
+        bloodGroups.forEach(bg => {
+            const value = form[bg].value;
+            data[bg] = value === '' ? 0 : Number(value);
+        });
+        fetch("{{ url_for('update_blood_inventory') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            const msgDiv = document.getElementById('inventory-message');
+            if (result.success) {
+                msgDiv.innerHTML = `<div class='alert alert-success'>${result.message}</div>`;
+                refreshChart();
+            } else {
+                msgDiv.innerHTML = `<div class='alert alert-danger'>${result.error || 'Update failed'}</div>`;
+            }
+        })
+        .catch(() => {
+            document.getElementById('inventory-message').innerHTML = `<div class='alert alert-danger'>An error occurred.</div>`;
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-plug"></i> ATA CONNECT (Admin to Admin)</h2>
+    <p>Send blood requests to other hospitals/admins.</p>
+    <div class="row">
+        <div class="col-12">
+            <h4>Send New Request</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Hospital Name</th>
+                        <th>Hospital ID</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for admin in hospitals %}
+                    <tr>
+                        <td>{{ admin.hospital_name }}</td>
+                        <td>{{ admin.hospital_id }}</td>
+                        <td>{{ admin.email }}</td>
+                        <td>{{ admin.phone }}</td>
+                        <td>{{ admin.location.address if admin.location else '' }}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="openRequestModal('{{ admin._id }}', '{{ admin.hospital_name }}')">
+                                Request Blood
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Request Modal -->
+<div class="modal fade" id="requestModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="requestForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Request Blood from <span id="modalHospitalName"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="toAdminId" name="to_admin_id">
+          <div class="mb-3">
+            <label for="bloodGroup" class="form-label">Blood Group</label>
+            <select class="form-select" id="bloodGroup" name="blood_group" required>
+              <option value="">Select</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="message" class="form-label">Message (optional)</label>
+            <textarea class="form-control" id="message" name="message"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Send Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openRequestModal(adminId, hospitalName) {
+    document.getElementById('toAdminId').value = adminId;
+    document.getElementById('modalHospitalName').innerText = hospitalName;
+    document.getElementById('bloodGroup').value = '';
+    document.getElementById('message').value = '';
+    var modal = new bootstrap.Modal(document.getElementById('requestModal'));
+    modal.show();
+}
+
+document.getElementById('requestForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    fetch('/admin/request_blood', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            to_admin_id: document.getElementById('toAdminId').value,
+            blood_group: document.getElementById('bloodGroup').value,
+            message: document.getElementById('message').value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Request sent successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+});
+</script>
+{% endblock %}

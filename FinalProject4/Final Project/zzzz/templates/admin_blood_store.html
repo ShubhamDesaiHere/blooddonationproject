@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-header bg-gradient bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">Blood Store Overview</h3>
+                        <small class="text-white-50">Live snapshot of all blood units in storage</small>
+                    </div>
+                    <span class="badge bg-light text-primary fw-bold" id="lastUpdated">Just now</span>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center g-3">
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 border rounded">
+                                <p class="text-muted mb-1">Available</p>
+                                <h3 class="text-success mb-0" id="totalAvailable">{{ totals.available }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 border rounded">
+                                <p class="text-muted mb-1">Used</p>
+                                <h3 class="text-secondary mb-0" id="totalUsed">{{ totals.used }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 border rounded">
+                                <p class="text-muted mb-1">Expired</p>
+                                <h3 class="text-danger mb-0" id="totalExpired">{{ totals.expired }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 border rounded">
+                                <p class="text-muted mb-1">Total Units</p>
+                                <h3 class="text-primary mb-0" id="totalUnits">{{ totals.total }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-table text-primary me-2"></i>Blood Store Ledger</h4>
+                    <span class="badge bg-secondary text-uppercase">Auto Refresh</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle text-center" id="bloodStoreTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Blood Group</th>
+                                    <th>Available</th>
+                                    <th>Used</th>
+                                    <th>Expired</th>
+                                    <th>Total Units</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                                <tr data-blood-group="{{ bg }}">
+                                    <td><span class="badge bg-danger fs-6">{{ bg }}</span></td>
+                                    <td class="text-success fw-semibold store-available">{{ blood_summary[bg]['available'] }}</td>
+                                    <td class="text-secondary store-used">{{ blood_summary[bg]['used'] }}</td>
+                                    <td class="text-danger store-expired">{{ blood_summary[bg]['expired'] }}</td>
+                                    <td class="fw-bold store-total">{{ blood_summary[bg]['total'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-muted small">
+                    Counts update automatically whenever units are added, removed, or their status changes.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const bloodStoreRefreshMs = 10000;
+
+function formatTimestamp(date) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function updateSummaryCards(totals) {
+    document.getElementById('totalAvailable').textContent = totals.available;
+    document.getElementById('totalUsed').textContent = totals.used;
+    document.getElementById('totalExpired').textContent = totals.expired;
+    document.getElementById('totalUnits').textContent = totals.total;
+    document.getElementById('lastUpdated').textContent = `Updated ${formatTimestamp(new Date())}`;
+}
+
+function updateTable(summary) {
+    Object.entries(summary).forEach(([bg, stats]) => {
+        const row = document.querySelector(`tr[data-blood-group="${bg}"]`);
+        if (!row) return;
+        row.querySelector('.store-available').textContent = stats.available;
+        row.querySelector('.store-used').textContent = stats.used;
+        row.querySelector('.store-expired').textContent = stats.expired;
+        row.querySelector('.store-total').textContent = stats.total;
+    });
+}
+
+function refreshBloodStore() {
+    fetch("{{ url_for('blood_store_data') }}")
+        .then(response => response.json())
+        .then(result => {
+            if (!result.success) return;
+            updateSummaryCards(result.totals);
+            updateTable(result.summary);
+        })
+        .catch(err => console.error('Failed to refresh blood store', err));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    refreshBloodStore();
+    setInterval(refreshBloodStore, bloodStoreRefreshMs);
+});
+</script>
+{% endblock %}
+

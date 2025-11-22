@@ -1,0 +1,332 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">🩸 Blood Donation Forms</h2>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Forms</h5>
+                    <h2 id="totalForms">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Submitted</h5>
+                    <h2 id="submittedForms">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Review</h5>
+                    <h2 id="pendingForms">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">This Month</h5>
+                    <h2 id="monthlyForms">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forms Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Form Submissions</h5>
+                    <div class="input-group w-auto">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search forms...">
+                        <button class="btn btn-outline-light" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Donor Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Submitted At</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="formsTableBody">
+                                <!-- Forms will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form Details Modal -->
+<div class="modal fade" id="formDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">🩸 Blood Donation Form Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="formDetailsContent">
+                <!-- Form details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Function to load form statistics
+function loadFormStats() {
+    fetch('/admin/blood_donation_forms/data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const totalForms = data.forms.length;
+                const submittedForms = data.forms.filter(f => f.status === 'submitted').length;
+                const pendingForms = data.forms.filter(f => f.status === 'pending').length;
+                
+                // Calculate monthly forms
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                const monthlyForms = data.forms.filter(f => {
+                    const formDate = new Date(f.submitted_at);
+                    return formDate.getMonth() === currentMonth && formDate.getFullYear() === currentYear;
+                }).length;
+                
+                document.getElementById('totalForms').textContent = totalForms;
+                document.getElementById('submittedForms').textContent = submittedForms;
+                document.getElementById('pendingForms').textContent = pendingForms;
+                document.getElementById('monthlyForms').textContent = monthlyForms;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading form stats:', error);
+        });
+}
+
+// Function to load forms table
+function loadFormsTable() {
+    fetch('/admin/blood_donation_forms/data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const tbody = document.getElementById('formsTableBody');
+                if (data.forms.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center">No form submissions found</td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = data.forms.map(form => `
+                    <tr>
+                        <td>${form.request_id}</td>
+                        <td>${form.user_name}</td>
+                        <td>${form.user_phone}</td>
+                        <td>${form.user_email}</td>
+                        <td>${form.submitted_at}</td>
+                        <td>
+                            <span class="badge bg-${form.status === 'submitted' ? 'success' : 'warning'}">
+                                ${form.status.charAt(0).toUpperCase() + form.status.slice(1)}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="viewFormDetails('${form.form_id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading forms table:', error);
+        });
+}
+
+// Function to view form details
+function viewFormDetails(formId) {
+    fetch('/admin/blood_donation_forms/data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const form = data.forms.find(f => f.form_id === formId);
+                if (form) {
+                    const formData = form.form_data;
+                    document.getElementById('formDetailsContent').innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Donor Information</h6>
+                                <p><strong>Name:</strong> ${form.user_name}</p>
+                                <p><strong>Phone:</strong> ${form.user_phone}</p>
+                                <p><strong>Email:</strong> ${form.user_email}</p>
+                                <p><strong>Request ID:</strong> ${form.request_id}</p>
+                                <p><strong>Submitted:</strong> ${form.submitted_at}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Personal Details</h6>
+                                <p><strong>Date of Birth:</strong> ${formData.personal_info?.date_of_birth || 'Not provided'}</p>
+                                <p><strong>Gender:</strong> ${formData.personal_info?.gender || 'Not provided'}</p>
+                                <p><strong>Weight:</strong> ${formData.personal_info?.weight || 'Not provided'} kg</p>
+                                <p><strong>Address:</strong> ${formData.personal_info?.address || 'Not provided'}</p>
+                                <p><strong>ID Proof:</strong> ${formData.personal_info?.id_proof || 'Not provided'}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-success">General Eligibility</h6>
+                                <p><strong>Recent Donation:</strong> ${formData.general_eligibility?.recent_donation || 'Not answered'}</p>
+                                <p><strong>Weight > 50kg:</strong> ${formData.general_eligibility?.weight_50kg || 'Not answered'}</p>
+                                <p><strong>Proper Meal:</strong> ${formData.general_eligibility?.proper_meal || 'Not answered'}</p>
+                                <p><strong>Sleep Hours:</strong> ${formData.general_eligibility?.sleep_hours || 'Not answered'}</p>
+                                <p><strong>Healthy Today:</strong> ${formData.general_eligibility?.healthy_today || 'Not answered'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-warning">Medical History</h6>
+                                <p><strong>Chronic Illness:</strong> ${formData.medical_history?.chronic_illness || 'Not answered'}</p>
+                                <p><strong>Major Surgery:</strong> ${formData.medical_history?.major_surgery || 'Not answered'}</p>
+                                <p><strong>Blood Transfusion:</strong> ${formData.medical_history?.blood_transfusion || 'Not answered'}</p>
+                                <p><strong>Current Medicines:</strong> ${formData.medical_history?.current_medicines || 'Not answered'}</p>
+                                <p><strong>Infectious Diseases:</strong> ${formData.medical_history?.infectious_diseases || 'Not answered'}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-danger">Infectious Disease & Risk</h6>
+                                <p><strong>Jaundice:</strong> ${formData.infectious_disease_risk?.jaundice || 'Not answered'}</p>
+                                <p><strong>HIV Positive:</strong> ${formData.infectious_disease_risk?.hiv_positive || 'Not answered'}</p>
+                                <p><strong>Tattoo/Piercing:</strong> ${formData.infectious_disease_risk?.tattoo_piercing || 'Not answered'}</p>
+                                <p><strong>Dental Surgery:</strong> ${formData.infectious_disease_risk?.dental_surgery || 'Not answered'}</p>
+                                <p><strong>IV Drugs:</strong> ${formData.infectious_disease_risk?.iv_drugs || 'Not answered'}</p>
+                                <p><strong>High Risk Group:</strong> ${formData.infectious_disease_risk?.high_risk_group || 'Not answered'}</p>
+                                <p><strong>Unprotected Sex:</strong> ${formData.infectious_disease_risk?.unprotected_sex || 'Not answered'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-info">Travel & Lifestyle</h6>
+                                <p><strong>Malaria Travel:</strong> ${formData.travel_lifestyle?.malaria_travel || 'Not answered'}</p>
+                                <p><strong>International Travel:</strong> ${formData.travel_lifestyle?.international_travel || 'Not answered'}</p>
+                                <p><strong>Alcohol Consumption:</strong> ${formData.travel_lifestyle?.alcohol_consumption || 'Not answered'}</p>
+                                <p><strong>Smoking:</strong> ${formData.travel_lifestyle?.smoking || 'Not answered'}</p>
+                            </div>
+                        </div>
+                        
+                        ${formData.personal_info?.gender === 'female' ? `
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="text-secondary">Women Donors Section</h6>
+                                <p><strong>Pregnant/Breastfeeding:</strong> ${formData.women_donors?.pregnant_breastfeeding || 'Not answered'}</p>
+                                <p><strong>Child Delivery:</strong> ${formData.women_donors?.child_delivery || 'Not answered'}</p>
+                                <p><strong>Menstrual Period:</strong> ${formData.women_donors?.menstrual_period || 'Not answered'}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-dark">Current Health Condition</h6>
+                                <p><strong>Current Symptoms:</strong> ${formData.current_health?.current_symptoms || 'Not answered'}</p>
+                                <p><strong>Recent Vaccination:</strong> ${formData.current_health?.recent_vaccination || 'Not answered'}</p>
+                                <p><strong>Recent Antibiotics:</strong> ${formData.current_health?.recent_antibiotics || 'Not answered'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Consent & Declaration</h6>
+                                <p><strong>Donor Signature:</strong> ${formData.consent_declaration?.donor_signature || 'Not provided'}</p>
+                                <p><strong>Signature Date:</strong> ${formData.consent_declaration?.signature_date || 'Not provided'}</p>
+                                <p><strong>Consent Terms:</strong> ${formData.consent_declaration?.consent_terms ? 'Agreed' : 'Not agreed'}</p>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="text-warning">Staff Checks (To be filled by staff)</h6>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <p><strong>Hemoglobin:</strong> ${formData.staff_checks?.hemoglobin || 'Not checked'} g/dL</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <p><strong>Blood Pressure:</strong> ${formData.staff_checks?.blood_pressure || 'Not checked'} mmHg</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <p><strong>Pulse:</strong> ${formData.staff_checks?.pulse || 'Not checked'} /min</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <p><strong>Temperature:</strong> ${formData.staff_checks?.temperature || 'Not checked'} °C</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Show the modal
+                    const modal = new bootstrap.Modal(document.getElementById('formDetailsModal'));
+                    modal.show();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading form details:', error);
+        });
+}
+
+// Search functionality
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#formsTableBody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? 'table-row' : 'none';
+    });
+});
+
+// Load data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadFormStats();
+    loadFormsTable();
+    
+    // Refresh data every 30 seconds
+    setInterval(function() {
+        loadFormStats();
+        loadFormsTable();
+    }, 30000);
+});
+</script>
+{% endblock %}

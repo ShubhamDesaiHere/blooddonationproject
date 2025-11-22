@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-paper-plane"></i> Outgoing Admin Requests</h2>
+    <p>View all blood requests you have sent to other hospitals/admins.</p>
+    <div id="outgoingRequests"></div>
+</div>
+
+<script>
+function loadOutgoingRequests() {
+    fetch('/admin/inter_hospital_requests')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                let html = '<table class="table table-bordered table-sm"><thead><tr>' +
+                    '<th>To Hospital</th><th>Blood Group</th><th>Message</th><th>Date</th><th>Status</th><th>Response</th></tr></thead><tbody>';
+                for (const req of data.outgoing) {
+                    html += `<tr>
+                        <td>${req.to_admin}</td>
+                        <td><span class="badge bg-danger">${req.blood_group}</span></td>
+                        <td>${req.message || ''}</td>
+                        <td>${req.created_at ? new Date(req.created_at).toLocaleString() : ''}</td>
+                        <td>${req.status}</td>
+                        <td>${req.response_message || ''}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                document.getElementById('outgoingRequests').innerHTML = html;
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadOutgoingRequests();
+    setInterval(loadOutgoingRequests, 10000); // Refresh every 10 seconds for real-time updates
+});
+</script>
+{% endblock %} 

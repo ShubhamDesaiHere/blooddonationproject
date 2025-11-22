@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">Admin Portal</h1>
+            <p class="lead mb-4">Welcome to the Blood Donation System Admin Portal</p>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-info">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Already have an account?</h5>
+                            <p class="card-text">Login to access your admin dashboard</p>
+                            <a href="{{ url_for('admin_login') }}" class="btn btn-danger btn-lg w-100">Admin Login</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">New Hospital?</h5>
+                            <p class="card-text">Register your hospital to join our network</p>
+                            <a href="{{ url_for('admin_signup') }}" class="btn btn-outline-danger btn-lg w-100">Register Hospital</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('landing') }}" class="text-muted">
+                    <i class="fas fa-arrow-left"></i> Back to Main Page
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.card {
+    transition: transform 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %} 
